@@ -104,7 +104,7 @@ void append(string filename) {
 
         // Ask for input for each column
         for (int i = 0; i < col_count; ++i) {
-            cout << "Enter value for column '" << col_names[i] << "': ";
+            cout << "Enter value for column:" << col_names[i] << ": ";
             getline(cin >> ws, row_data[i]);
         }
 

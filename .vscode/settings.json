@@ -12,6 +12,7 @@
         "initializer_list": "cpp",
         "*.tcc": "cpp",
         "ostream": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "numeric": "cpp"
     }
 }
