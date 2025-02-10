@@ -4,14 +4,18 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <vector>
 
 using namespace std;
 
+string removeSpaces(string inp);
 double evalPar(stringstream& ss);
-double evalFact(stringstream& ss);
 double evalExp(stringstream& ss);
+double evalFact(stringstream& ss);
 double evalPow(stringstream& ss);
 double evalVar(stringstream& ss);
+double evalFunc(stringstream& ss);
+vector<double> parseArgs(stringstream& ss);
 
 map<string, double> variables; // Holds variables and their values
 
@@ -37,17 +41,21 @@ double evalPar(stringstream& ss) {
 }
 
 double evalPow(stringstream& ss) {
-    double left = evalPar(ss);
+    double left = evalFunc(ss);  // Call evalFunc() first to check for function calls
     while (true) {
         char op = ss.peek();
         if (op == '^') {
             ss.get();
-            double right = evalPow(ss);
+            double right = evalFunc(ss);
             left = pow(left, right);
-        } else {break;}
+        } else {
+            break;
+        }
     }
     return left;
 }
+
+
 
 double evalVar(stringstream& ss) {
     string varName;
@@ -68,20 +76,22 @@ double evalVar(stringstream& ss) {
         if (variables.find(varName) != variables.end()) {
             return variables[varName];  // Return stored value
         } else {
-            throw runtime_error("Undefined variable: " + varName);
+            cout << "[ERROR]: Undefined variable: " << varName << endl;
+            return 0;  // Return 0 instead of throwing an error
         }
     }
 
-    return evalPow(ss);  // If not a variable, evaluate as normal
+    return evalPar(ss);  // If not a variable, evaluate as normal
 }
 
+
 double evalFact(stringstream& ss) {
-    double left = evalVar(ss);
+    double left = evalPow(ss);
     while (true) {
         char op = ss.peek();
         if (op == '*' || op == '/') {
             ss.get();
-            double right = evalVar(ss);
+            double right = evalPow(ss);
             if (op == '*') {
                 left *= right;
             } else {
@@ -111,6 +121,55 @@ double evalExp(stringstream &ss)
     }
     return left;
 }
+
+double evalFunc(stringstream& ss) {
+    string funcName;
+    char next = ss.peek();
+
+    if (isalpha(next)) {  // Function name starts with a letter
+        while (isalnum(ss.peek())) {  // Read function name
+            funcName += ss.get();
+        }
+
+        if (ss.peek() == '(') {  // Function call detected
+            ss.get();  // Consume '('
+            vector<double> args = parseArgs(ss);
+            ss.get();  // Consume ')'
+
+            // Function behavior
+            if (funcName == "add") {
+                return args[0] + args[1];
+            } else if (funcName == "sub") {
+                return args[0] - args[1];
+            } else if (funcName == "mul") {
+                return args[0] * args[1];
+            } else if (funcName == "div") {
+                return args[0] / args[1];
+            } else if (funcName == "pow") {
+                return pow(args[0], args[1]);
+            } else if (funcName == "sqrt") {
+                return sqrt(args[0]);
+            } else {
+                throw runtime_error("Unknown function: " + funcName);
+            }
+        }
+    }
+
+    return evalVar(ss);  // If not a function, check for variables
+}
+
+
+vector<double> parseArgs(stringstream& ss) {
+    vector<double> args;
+    while (ss.peek() != ')') {
+        args.push_back(evalExp(ss));  // Evaluate arguments correctly (including variables)
+        if (ss.peek() == ',') {
+            ss.get();  // Consume ','
+        }
+    }
+    return args;
+}
+
 
 int main()
 {
